@@ -1,1 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Freshwater Withdrawal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0b1220;
+    color: #e8ead0;
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.3rem, 3vw, 2rem);
+    text-align: center;
+    letter-spacing: 0.02em;
+    color: #c8e6e0;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: #7a9090;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .chart-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    width: 100%;
+    max-width: 1020px;
+  }
+
+  @media (min-width: 700px) {
+    .chart-wrapper { flex-direction: row; align-items: flex-start; justify-content: center; }
+  }
+
+  .chart-container {
+    position: relative;
+    width: 480px;
+    height: 480px;
+    flex-shrink: 0;
+  }
+
+  .chart-center-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .chart-center-label .big {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: #c8e6e0;
+    line-height: 1;
+  }
+  .chart-center-label .small {
+    font-size: 0.65rem;
+    color: #7a9090;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .legend-container {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex: 1;
+    max-width: 380px;
+  }
+
+  .legend-section {
+    border-left: 3px solid;
+    padding-left: 14px;
+  }
+
+  .legend-section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .legend-section-title .pct {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 400;
+    opacity: 0.7;
+    background: rgba(255,255,255,0.07);
+    padding: 2px 8px;
+    border-radius: 20px;
+  }
+
+  .legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: #b0c4c0;
+  }
+
+  .legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-item .item-pct {
+    margin-left: auto;
+    font-weight: 500;
+    color: #d0e8e0;
+    font-size: 0.82rem;
+  }
+
+  .legend-item.ai-row { color: #FFD700; }
+
+  .source {
+    font-size: 0.62rem;
+    color: #4a6060;
+    text-align: center;
+    margin-top: 20px;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<h1>Global Freshwater Withdrawal</h1>
+<p class="subtitle">By Sector &amp; Subcategory</p>
+
+<div class="chart-wrapper">
+  <div class="chart-container">
+    <canvas id="chart"></canvas>
+    <div class="chart-center-label">
+      <div class="big">100%</div>
+      <div class="small">Total<br>Withdrawal</div>
+    </div>
+  </div>
+
+  <div class="legend-container">
+    <div class="legend-section" style="border-color: #4aab8a;">
+      <div class="legend-section-title" style="color:#4aab8a;">
+        Agriculture <span class="pct">≈ 70%</span>
+      </div>
+      <div class="legend-items">
+        <div class="legend-item"><div class="legend-dot" style="background:#4aab8a;"></div> Food crops (human consumption) <span class="item-pct">40%</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2d8c6e;"></div> Feed crops (livestock) <span class="item-pct">21%</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1d6e54;"></div> Fiber crops (cotton, etc.) <span class="item-pct">7%</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#0f4a38;"></div> Other (biofuels, horticulture) <span class="item-pct">2%</span></div>
+      </div>
+    </div>
+
+    <div class="legend-section" style="border-color: #4a90c4;">
+      <div class="legend-section-title" style="color:#4a90c4;">
+        Industry <span class="pct">≈ 18%</span>
+      </div>
+      <div class="legend-items">
+        <div class="legend-item"><div class="legend-dot" style="background:#4a90c4;"></div> Thermoelectric / cooling <span class="item-pct">7.5%</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2d6fa0;"></div> Manufacturing &amp; processing <span class="item-pct">5.5%</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1a4f7a;"></div> Mining / extraction <span class="item-pct">2.7%</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#0e3050;"></div> Other industrial processes <span class="item-pct">~2.3%</span></div>
+        <div class="legend-item ai-row"><div class="legend-dot" style="background:#FFD700;"></div> AI &amp; Data Centers <span class="item-pct">~0.014%</span></div>
+      </div>
+    </div>
+
+    <div class="legend-section" style="border-color: #c48a3a;">
+      <div class="legend-section-title" style="color:#c48a3a;">
+        Domestic / Municipal <span class="pct">≈ 12%</span>
+      </div>
+      <div class="legend-items">
+        <div class="legend-item"><div class="legend-dot" style="background:#c48a3a;"></div> Household use <span class="item-pct">7%</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9a6520;"></div> Public services <span class="item-pct">3%</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:#6a4010;"></div> Urban irrigation (parks, etc.) <span class="item-pct">2%</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="source">Sources: FAO AQUASTAT · UN World Water Development Report · Water Resources Research · Lawrence Berkeley National Laboratory · approximate values</p>
+
+<script>
+const innerData   = [70, 18, 12];
+const innerColors = ['#2d8c6e', '#2d6fa0', '#9a6520'];
+const innerLabels = [
+  { line1: 'Agriculture', line2: '70%' },
+  { line1: 'Industry',    line2: '18%' },
+  { line1: 'Domestic',   line2: '12%' }
+];
+
+// Corrected subcategory data — all 12 slices sum to 100%
+// Ag (70): food 40, feed 21, fiber 7, other 2
+// Industry (18): thermo 7.5, mfg 5.5, mining 2.7, other 2.286, AI 0.014
+// Domestic (12): household 7, public 3, urban 2
+const outerData   = [40, 21, 7, 2, 7.5, 5.5, 2.7, 2.286, 0.014, 7, 3, 2];
+const outerColors = [
+  '#4aab8a', '#2d8c6e', '#1d6e54', '#0f4a38',
+  '#4a90c4', '#2d6fa0', '#1a4f7a', '#0e3050', 'transparent',
+  '#c48a3a', '#9a6520', '#6a4010'
+];
+const outerLabels = [
+  { line1: 'Food Crops',       line2: '40%'    },
+  { line1: 'Feed Crops',       line2: '21%'    },
+  { line1: 'Fiber Crops',      line2: '7%'     },
+  { line1: 'Other Ag.',        line2: '2%'     },
+  { line1: 'Power & Cooling',  line2: '7.5%'   },
+  { line1: 'Manufacturing',    line2: '5.5%'   },
+  { line1: 'Mining',           line2: '2.7%'   },
+  { line1: 'Other Industry',   line2: '~2.3%'  },
+  null, // AI & Data Centers — too small to label on chart
+  { line1: 'Household',        line2: '7%'     },
+  { line1: 'Public Services',  line2: '3%'     },
+  { line1: 'Parks & Fields',   line2: '2%'     },
+];
+
+// ─── Custom label plugin ───────────────────────────────────────────────────
+const staggeredLabels = {
+  id: 'staggeredLabels',
+  afterDraw(chart) {
+    const { ctx, chartArea } = chart;
+    const cx = (chartArea.left + chartArea.right) / 2;
+    const cy = (chartArea.top + chartArea.bottom) / 2;
+
+    // ── Inner ring labels ──────────────────────────────────────────────────
+    const innerMeta = chart.getDatasetMeta(0);
+    innerMeta.data.forEach((arc, i) => {
+      const lbl = innerLabels[i];
+      const mid = (arc.startAngle + arc.endAngle) / 2;
+      const r   = (arc.innerRadius + arc.outerRadius) / 2;
+      const x   = cx + Math.cos(mid) * r;
+      const y   = cy + Math.sin(mid) * r;
+
+      ctx.save();
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+
+      // line1
+      ctx.font      = 'bold 11px "DM Sans", sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillText(lbl.line1, x + 1, y - 6 + 1);
+      ctx.fillStyle = '#e8ead0';
+      ctx.fillText(lbl.line1, x, y - 6);
+
+      // line2
+      ctx.font      = '10px "DM Sans", sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillText(lbl.line2, x + 1, y + 7 + 1);
+      ctx.fillStyle = 'rgba(232,234,208,0.75)';
+      ctx.fillText(lbl.line2, x, y + 7);
+
+      ctx.restore();
+    });
+
+    // ── Outer ring meta ────────────────────────────────────────────────────
+    const outerMeta = chart.getDatasetMeta(1);
+
+    // ── AI & Data Centers marker line ─────────────────────────────────────
+    const aiArc  = outerMeta.data[8]; // index 8 = AI slice
+    const aiMid  = (aiArc.startAngle + aiArc.endAngle) / 2;
+    const aiInR  = aiArc.innerRadius;
+    const aiOutR = aiArc.outerRadius;
+    const lineColor = '#FFD700'; // gold — high contrast against dark blues/greens
+
+    // Draw tick line from just inside inner radius to just beyond outer radius
+    const lineInner = aiInR - 4;
+    const lineOuter = aiOutR + 18;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(aiMid) * lineInner, cy + Math.sin(aiMid) * lineInner);
+    ctx.lineTo(cx + Math.cos(aiMid) * lineOuter, cy + Math.sin(aiMid) * lineOuter);
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth   = 2;
+    ctx.setLineDash([]);
+    ctx.stroke();
+
+    // Small circle at outer end
+    const dotX = cx + Math.cos(aiMid) * (lineOuter + 4);
+    const dotY = cy + Math.sin(aiMid) * (lineOuter + 4);
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 3, 0, Math.PI * 2);
+    ctx.fillStyle = lineColor;
+    ctx.fill();
+
+    // Label — offset outward from the dot
+    const lblR  = lineOuter + 14;
+    const lblX  = cx + Math.cos(aiMid) * lblR;
+    const lblY  = cy + Math.sin(aiMid) * lblR;
+    const isRight = Math.cos(aiMid) >= 0;
+    ctx.textAlign    = isRight ? 'left' : 'right';
+    ctx.textBaseline = 'middle';
+    ctx.font         = 'bold 9px "DM Sans", sans-serif';
+    ctx.fillStyle    = lineColor;
+    ctx.fillText('AI & Data Centers', lblX, lblY - 6);
+    ctx.font         = '8.5px "DM Sans", sans-serif';
+    ctx.fillStyle    = 'rgba(255,215,0,0.75)';
+    ctx.fillText('~0.014% of global withdrawal', lblX, lblY + 5);
+    ctx.restore();
+
+    // ── Outer ring labels (staggered) ──────────────────────────────────────
+    const sampleArc = outerMeta.data[0];
+    const innerR    = sampleArc.innerRadius;
+    const outerR    = sampleArc.outerRadius;
+    const span      = outerR - innerR;
+
+    // Three concentric tiers: outer → mid → inner
+    const tiers = [
+      innerR + span * 0.83,
+      innerR + span * 0.58,
+      innerR + span * 0.33,
+    ];
+
+    // Build candidate label list (skip nulls / tiny slices)
+    const candidates = outerMeta.data
+      .map((arc, i) => {
+        if (!outerLabels[i]) return null;
+        const mid = (arc.startAngle + arc.endAngle) / 2;
+        return { i, mid, lbl: outerLabels[i] };
+      })
+      .filter(Boolean);
+
+    // Sort by angle so adjacency checks work
+    candidates.sort((a, b) => a.mid - b.mid);
+
+    // Greedy tier assignment: pick the lowest-index tier that doesn't
+    // angularly clash with an already-placed label at that tier.
+    const MIN_GAP = 0.38; // radians — tune if needed
+    const placed  = []; // { mid, tier }
+
+    candidates.forEach(c => {
+      let chosenTier = 0;
+      for (let t = 0; t < tiers.length; t++) {
+        const clash = placed.some(p =>
+          p.tier === t && angularDiff(p.mid, c.mid) < MIN_GAP
+        );
+        if (!clash) { chosenTier = t; break; }
+        if (t === tiers.length - 1) chosenTier = t;
+      }
+      placed.push({ mid: c.mid, tier: chosenTier });
+      c.tier = chosenTier;
+    });
+
+    // Draw labels
+    candidates.forEach(c => {
+      const r   = tiers[c.tier];
+      const x   = cx + Math.cos(c.mid) * r;
+      const y   = cy + Math.sin(c.mid) * r;
+      const lbl = c.lbl;
+
+      ctx.save();
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+
+      // line1 (name)
+      ctx.font      = 'bold 9px "DM Sans", sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText(lbl.line1, x + 1, y - 5.5 + 1);
+      ctx.fillStyle = '#e8ead0';
+      ctx.fillText(lbl.line1, x, y - 5.5);
+
+      // line2 (%)
+      ctx.font      = '8.5px "DM Sans", sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText(lbl.line2, x + 1, y + 5.5 + 1);
+      ctx.fillStyle = 'rgba(232,234,208,0.7)';
+      ctx.fillText(lbl.line2, x, y + 5.5);
+
+      ctx.restore();
+    });
+  }
+};
+
+function angularDiff(a, b) {
+  let d = Math.abs(a - b) % (2 * Math.PI);
+  if (d > Math.PI) d = 2 * Math.PI - d;
+  return d;
+}
+
+// ─── Chart ────────────────────────────────────────────────────────────────
+const ctx = document.getElementById('chart').getContext('2d');
+
+new Chart(ctx, {
+  type: 'doughnut',
+  plugins: [staggeredLabels],
+  data: {
+    labels: ['Agriculture', 'Industry', 'Domestic', ...outerLabels.map((l,i) => l ? l.line1 : `slice-${i}`)],
+    datasets: [
+      {
+        data: innerData,
+        backgroundColor: innerColors,
+        borderColor: '#0b1220',
+        borderWidth: 3,
+        weight: 1
+      },
+      {
+        data: outerData,
+        backgroundColor: outerColors,
+        borderColor: '#0b1220',
+        borderWidth: 2,
+        weight: 1.6
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    cutout: '32%',
+    events: [],
+    plugins: {
+      legend:  { display: false },
+      tooltip: { enabled: false }
+    },
+    animation: {
+      animateRotate: true,
+      duration: 1200,
+      easing: 'easeInOutQuart',
+      onComplete() { this.draw(); }
+    }
+  }
+});
+</script>
+</body>
+</html>
 
